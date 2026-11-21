@@ -1,6 +1,6 @@
 name: DocScan
 options:
-  bundleIdPrefix: com.example
+  bundleIdPrefix: com.raycarter95
   deploymentTarget:
     iOS: "17.0"
 packages:
@@ -20,7 +20,7 @@ targets:
         product: GoogleSignIn
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.docscan
+        PRODUCT_BUNDLE_IDENTIFIER: com.raycarter95.docscan
         INFOPLIST_FILE: DocScan/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         TARGETED_DEVICE_FAMILY: "1"

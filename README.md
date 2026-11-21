@@ -43,7 +43,7 @@ brew install xcodegen
 cd DocScan && xcodegen generate && open DocScan.xcodeproj
 ```
 
-In Xcode unter *Signing & Capabilities* dein Team auswählen. Wenn nötig, die Bundle-ID ändern, z. B. `de.deinname.docscan`.
+In Xcode unter *Signing & Capabilities* dein Team auswählen. Wenn nötig, die Bundle-ID ändern, aktuell `com.raycarter95.docscan`.
 Danach läuft die App schon auf dem iPhone. „Hochladen“ speichert dann zunächst in der Dateien-App.
 
 ### 2. Google Drive anbinden (einmalig, ca. 10 Minuten)
