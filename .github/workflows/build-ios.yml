@@ -1,0 +1,35 @@
+# Baut die App auf einem Mac von GitHub und stellt eine unsignierte .ipa zum Download bereit.
+# Die .ipa kann unter Windows mit Sideloadly aufs iPhone installiert werden (siehe README).
+name: iOS-Build
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: XcodeGen installieren und Projekt erzeugen
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: App bauen (ohne Signatur)
+        run: |
+          xcodebuild -project DocScan.xcodeproj -scheme DocScan -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+
+      - name: .ipa verpacken
+        run: |
+          mkdir Payload
+          cp -R build/Build/Products/Release-iphoneos/DocScan.app Payload/
+          zip -qr DocScan.ipa Payload
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DocScan-ipa
+          path: DocScan.ipa
