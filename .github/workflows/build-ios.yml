@@ -33,3 +33,60 @@ jobs:
         with:
           name: DocScan-ipa
           path: DocScan.ipa
+
+  # Simulator-Version: Screenshots im iPhone-Simulator + Datei für appetize.io (Test im Browser)
+  simulator:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: XcodeGen installieren und Projekt erzeugen
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Für den Simulator bauen
+        run: |
+          xcodebuild -project DocScan.xcodeproj -scheme DocScan -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO build
+          cd build/Build/Products/Debug-iphonesimulator
+          zip -qr "$GITHUB_WORKSPACE/DocScan-Simulator.zip" DocScan.app
+
+      - name: App im Simulator durchklicken und Screenshots machen
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c "
+          import sys, json
+          devs = [d for rt, ds in json.load(sys.stdin)['devices'].items() if 'iOS' in rt for d in ds if d['name'].startswith('iPhone')]
+          pro = [d for d in devs if 'Pro' in d['name'] and 'Max' not in d['name']]
+          print((pro or devs)[-1]['udid'])")
+          echo "Simulator: $UDID"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl status_bar "$UDID" override --time 9:41 --batteryLevel 100 || true
+          xcrun simctl install "$UDID" build/Build/Products/Debug-iphonesimulator/DocScan.app
+          mkdir -p screenshots
+          shot() {
+            name=$1; wait=$2; shift 2
+            xcrun simctl launch --terminate-running-process "$UDID" com.raycarter95.docscan "$@"
+            sleep "$wait"
+            xcrun simctl io "$UDID" screenshot "screenshots/$name.png"
+          }
+          shot 1-start 8
+          shot 2-raender 15 -demoStep crop
+          shot 3-name 30 -demoStep finish
+
+      - name: Screenshots in den Branch „screenshots“ legen
+        run: |
+          cd screenshots
+          git init -q -b screenshots
+          git add .
+          git -c user.name="github-actions" -c user.email="github-actions@users.noreply.github.com" commit -qm "Screenshots von ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" screenshots
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: DocScan-Simulator-fuer-Appetize
+          path: DocScan-Simulator.zip

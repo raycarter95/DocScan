@@ -8,6 +8,7 @@ struct HomeView: View {
     private struct FlowRoute: Identifiable {
         let id = UUID()
         let image: UIImage?
+        var autoConfirm = false
     }
 
     @State private var route: FlowRoute?
@@ -45,6 +46,18 @@ struct HomeView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.large)
 
+                if DemoMode.isEnabled, let demo = DemoMode.image {
+                    Button {
+                        route = FlowRoute(image: demo)
+                    } label: {
+                        Label("Demo-Dokument testen", systemImage: "doc.text.image")
+                            .frame(maxWidth: .infinity, minHeight: 34)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+                    .tint(.orange)
+                }
+
                 if let target = settings.defaultTarget {
                     Button { showSettings = true } label: {
                         Label("Hochladen nach: \(target.title)", systemImage: target.icon)
@@ -64,7 +77,12 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showSettings) { SettingsView() }
             .fullScreenCover(item: $route) { route in
-                ScanFlowView(image: route.image)
+                ScanFlowView(image: route.image, autoConfirm: route.autoConfirm)
+            }
+            .onAppear {
+                if let step = DemoMode.startStep, let demo = DemoMode.image, route == nil {
+                    route = FlowRoute(image: demo, autoConfirm: step == "finish")
+                }
             }
             .onChange(of: photoItem) { _, item in
                 guard let item else { return }

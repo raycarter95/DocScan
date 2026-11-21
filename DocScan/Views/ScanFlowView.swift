@@ -14,9 +14,11 @@ struct ScanFlowView: View {
     @EnvironmentObject private var settings: SettingsStore
     @Environment(\.dismiss) private var dismiss
     @State private var step: Step
+    private let autoConfirm: Bool
 
-    init(image: UIImage?) {
+    init(image: UIImage?, autoConfirm: Bool = false) {
         _step = State(initialValue: image.map { .detecting($0) } ?? .camera)
+        self.autoConfirm = autoConfirm
     }
 
     var body: some View {
@@ -59,7 +61,11 @@ struct ScanFlowView: View {
     private func detect(_ raw: UIImage) async {
         let image = await runInBackground { raw.normalized() }
         let quad = await DocumentProcessor.detectDocument(in: image)
-        step = .crop(image, detected: quad)
+        if autoConfirm {
+            await finish(image, quad: quad ?? .full)
+        } else {
+            step = .crop(image, detected: quad)
+        }
     }
 
     private func finish(_ image: UIImage, quad: Quad) async {
