@@ -145,12 +145,16 @@ struct DriveClient {
         let (data, response) = try await URLSession.shared.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard (200..<300).contains(status) else {
-            struct GoogleError: Decodable { struct Inner: Decodable { let message: String }; let error: Inner }
-            let message = (try? JSONDecoder().decode(GoogleError.self, from: data))?.error.message ?? "HTTP \(status)"
+            let message = (try? JSONDecoder().decode(GoogleAPIError.self, from: data))?.error.message ?? "HTTP \(status)"
             throw DriveError.api(message)
         }
         return try JSONDecoder().decode(T.self, from: data)
     }
+}
+
+private struct GoogleAPIError: Decodable {
+    struct Inner: Decodable { let message: String }
+    let error: Inner
 }
 
 private extension Data {
