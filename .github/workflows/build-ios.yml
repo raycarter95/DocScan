@@ -78,8 +78,9 @@ jobs:
           shot 2-raender 15 -demoStep crop
           shot 3-name 30 -demoStep finish
 
-      - name: Screenshots in den Branch „screenshots“ legen
+      - name: Screenshots und Simulator-App in den Branch „screenshots“ legen
         run: |
+          cp DocScan-Simulator.zip screenshots/
           cd screenshots
           git init -q -b screenshots
           git add .
